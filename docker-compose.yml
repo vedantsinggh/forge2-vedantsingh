@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pulsedesk-backend
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: backend
+      SERVICE_TAGS: dev
+    volumes:
+      - ./backend:/var/www
+    networks:
+      - pulsedesk-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pulsedesk-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - pulsedesk-net
+
+  db:
+    image: mysql:8.0
+    container_name: pulsedesk-db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: pulsedesk
+      MYSQL_USER: pulsedesk_user
+      MYSQL_PASSWORD: pulsedesk_password
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - pulsedesk-net
+
+networks:
+  pulsedesk-net:
+    driver: bridge
+
+volumes:
+  dbdata:
+    driver: local
