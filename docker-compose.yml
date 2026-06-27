@@ -1,6 +1,27 @@
 version: '3.8'
 
 services:
+  db:
+    image: mysql:8.0
+    container_name: pulsedesk-db
+    restart: unless-stopped
+    tty: true
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-pulsedesk}
+      MYSQL_USER: ${DB_USERNAME:-pulsedesk_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-pulsedesk_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - pulsedesk-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   backend:
     build:
       context: ./backend
@@ -9,12 +30,30 @@ services:
     restart: unless-stopped
     tty: true
     environment:
-      SERVICE_NAME: backend
-      SERVICE_TAGS: dev
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_KEY: ${APP_KEY:-base64:c3VwZXJzZWNyZXRrZXlmb3JwdWxzZWRlc2thcHBsaWNhdGlvbg==}
+      APP_URL: ${APP_URL:-http://localhost}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-pulsedesk}
+      DB_USERNAME: ${DB_USERNAME:-pulsedesk_user}
+      DB_PASSWORD: ${DB_PASSWORD:-pulsedesk_password}
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-localhost,127.0.0.1}
     volumes:
-      - ./backend:/var/www
+      - storage_data:/var/www/storage/app/public
     networks:
       - pulsedesk-net
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/ready && nc -z 127.0.0.1 9000 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   frontend:
     build:
@@ -23,26 +62,20 @@ services:
     container_name: pulsedesk-frontend
     restart: unless-stopped
     ports:
-      - "3000:80"
-    networks:
-      - pulsedesk-net
-
-  db:
-    image: mysql:8.0
-    container_name: pulsedesk-db
-    restart: unless-stopped
-    tty: true
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_DATABASE: pulsedesk
-      MYSQL_USER: pulsedesk_user
-      MYSQL_PASSWORD: pulsedesk_password
-      MYSQL_ROOT_PASSWORD: root_password
+      - "80:80"
     volumes:
-      - dbdata:/var/lib/mysql
+      - storage_data:/var/www/storage/app/public:ro
     networks:
       - pulsedesk-net
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 networks:
   pulsedesk-net:
@@ -50,4 +83,6 @@ networks:
 
 volumes:
   dbdata:
+    driver: local
+  storage_data:
     driver: local

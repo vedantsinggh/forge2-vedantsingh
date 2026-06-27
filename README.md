@@ -1,109 +1,123 @@
 # PulseDesk - Multi-Tenant Enterprise Helpdesk Platform
 
-Welcome to **PulseDesk**, a production-ready multi-tenant support ticketing and helpdesk solution built for the Forge 2 Hackathon.
-
-PulseDesk is engineered to provide lightning-fast support operations, rigid organizational multi-tenancy isolation, automated SLA tracking, real-time activity audit logging, and modern agent workflows.
+Welcome to **PulseDesk**, a complete multi-tenant support ticketing and helpdesk application.
 
 ---
 
-## 🛠️ Tech Stack
+## 1. Requirements
 
-### Backend
-- **Framework:** Laravel 11 (PHP 8.2+)
-- **Database:** MySQL 8
-- **Authentication:** Laravel Sanctum (Token-based API auth)
-- **Architecture:** Multi-Tenant Domain-Driven RESTful API
+Before starting, ensure your host environment has the following installed:
 
-### Frontend
-- **Framework:** React 19
-- **Build Tool:** Vite
-- **Styling:** TailwindCSS (Glassmorphism & Custom Design System)
-- **State & Routing:** Context API & React Router v7
+* **Docker Engine** (v20.10+ or higher)
+* **Docker Compose** (v2.0+ or higher)
+* **Git**
 
-### Operations & Deployment
-- **Containerization:** Docker & Docker Compose
-- **Continuous Integration:** GitHub Actions CI/CD Pipeline
+No local installations of PHP, Composer, Node.js, or MySQL are required on your host system.
 
 ---
 
-## 📁 Repository Structure
+## 2. Local Development
 
-```
-pulsedesk/
-├── backend/                  # Laravel 11 REST API Application
-│   ├── app/                  # Controllers, Models, Middleware, Services, Policies
-│   ├── database/             # Migrations, Factories, Seeders
-│   ├── routes/               # API Endpoint Routing Definitions
-│   ├── tests/                # Automated Feature & Unit Test Suite
-│   └── .env.example
-├── frontend/                 # React 19 Single Page Application
-│   ├── src/                  # API Clients, Components, Pages, Layouts, Hooks
-│   └── .env.example
-├── docs/                     # API Specifications & System Documentation
-├── evidence/                 # Verification Screenshots, Test Reports, Logs
-├── agents/                   # Orchestrator & OpenClaw Agent Specifications
-├── slack-export/             # Team Communication Logs & Integration Data
-├── sprints/                  # Complete Sprint Backlogs & Issue Specifications
-│   ├── sprint-1.md
-│   ├── sprint-2.md
-│   ├── sprint-3.md
-│   ├── sprint-4.md
-│   └── backlog.md
-├── README.md                 # Project Overview & Getting Started Guide
-├── ARCHITECTURE.md           # Architectural Blueprints & Security Models
-├── SUBMISSION.md             # Forge 2 Hackathon Submission Overview
-└── agent-log.md              # OpenClaw Autonomous Execution Logs
-```
-
----
-
-## 🚀 Quick Start (Local Development)
-
-### Prerequisites
-- Docker & Docker Compose
-- PHP 8.2+ and Composer (for local CLI running)
-- Node.js 20+ and npm (for frontend running)
-
-### Running with Docker Compose
+For quick local evaluation or development:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-org/pulsedesk.git
+   git clone <repo-url>
    cd pulsedesk
    ```
 
-2. **Launch the environment:**
+2. **Launch the stack using Docker Compose:**
    ```bash
-   docker-compose up -d --build
+   docker compose up -d --build
    ```
 
-3. **Run migrations and seeders:**
-   ```bash
-   docker-compose exec backend php artisan migrate --seed
-   ```
-
-4. **Access the application:**
-   - **Frontend App:** `http://localhost:3000`
-   - **Backend API:** `http://localhost:8000/api/v1`
+3. **Open your browser:**
+   Navigate to `http://localhost` to access the application.
 
 ---
 
-## 📋 Sprint Roadmap
+## 3. Production Deployment
 
-PulseDesk development is orchestrated across 4 distinct sprints:
-1. **Sprint 1: Foundation** - Laravel & React setup, Sanctum Auth, Organization Multi-tenancy, User Roles.
-2. **Sprint 2: Ticketing** - Ticket Model, RESTful CRUD API, Public Comments, Agent Internal Notes, Filters & Search.
-3. **Sprint 3: Frontend** - Modern UI/UX layout, Dashboard Metrics, Ticket Management Views, Real-time Interaction.
-4. **Sprint 4: Production** - Aggregated Analytics API, SLA Timers, Event Notifications, Audit Logs, CI/CD & Docker.
+PulseDesk is designed for automated one-command production deployments (including cloud platforms like Zeabur, AWS, DigitalOcean, or Linux VPS).
+
+### One-Command Startup
+To deploy in a production environment:
+
+```bash
+docker compose up -d --build
+```
+
+### What Happens Automatically
+* **Database Setup**: Spins up a dedicated MySQL 8 container with persistent storage volumes.
+* **Database Migrations & Seeding**: Automatically waits for database readiness, runs database schema migrations, and seeds initial demo data.
+* **Optimization**: Warms and caches Laravel configuration, API routes, and views for optimal performance.
+* **Reverse Proxy**: Nginx automatically proxies API calls (`/api`), serves static uploaded media (`/storage`), and serves the compiled React application on port `80`.
 
 ---
 
-## 🔒 Security & Tenant Isolation
+## 4. Docker Deployment
 
-PulseDesk enforces rigid organization isolation. Every database query executed for tenant resources automatically applies a global tenant scope binding queries to `auth()->user()->organization_id`. Data from Organization A is mathematically inaccessible to Organization B.
+The application stack is defined in `docker-compose.yml` and consists of three containerized services connected over an isolated internal network (`pulsedesk-net`):
+
+| Service | Container Name | Description | Exposed Port |
+|---|---|---|---|
+| **Frontend & Nginx** | `pulsedesk-frontend` | Serves static React production assets and acts as Reverse Proxy for API & Storage | `80:80` |
+| **Laravel Backend** | `pulsedesk-backend` | PHP 8.2-FPM application server handling API business logic | Internal (`9000`) |
+| **Database** | `pulsedesk-db` | MySQL 8.0 database engine with persistent named volume | Internal (`3306`) |
+
+### Standard Docker Commands
+
+* **Start application**: `docker compose up -d --build`
+* **Stop application**: `docker compose down`
+* **View running container health**: `docker compose ps`
+* **View container logs**: `docker compose logs -f`
 
 ---
 
-## 📄 License
+## 5. Environment Variables
 
-Built exclusively for the **Forge 2 Hackathon**. All rights reserved.
+All services support zero-configuration defaults out-of-the-box. If custom settings are required, copy `.env.example` files to `.env` in the respective directories.
+
+### Backend (`backend/.env.example`)
+
+| Variable | Description | Default Value |
+|---|---|---|
+| `APP_NAME` | Name of the application | `PulseDesk` |
+| `APP_ENV` | Environment stage | `production` |
+| `APP_KEY` | Application encryption key | Pre-generated default |
+| `APP_DEBUG` | Enable debug logging | `false` |
+| `APP_URL` | Base application URL | `http://localhost` |
+| `DB_CONNECTION` | Database driver | `mysql` |
+| `DB_HOST` | Database host container name | `db` |
+| `DB_PORT` | Database connection port | `3306` |
+| `DB_DATABASE` | MySQL database name | `pulsedesk` |
+| `DB_USERNAME` | MySQL user name | `pulsedesk_user` |
+| `DB_PASSWORD` | MySQL password | `pulsedesk_password` |
+| `SANCTUM_STATEFUL_DOMAINS` | Allowed stateful domains for authentication | `localhost,127.0.0.1` |
+
+### Frontend (`frontend/.env.example`)
+
+| Variable | Description | Default Value |
+|---|---|---|
+| `VITE_APP_TITLE` | Application Title | `PulseDesk` |
+| `VITE_API_BASE_URL` | Relative API URL route | `/api/v1` |
+
+---
+
+## 6. Troubleshooting
+
+### Container Health Check Pending
+If containers take longer than expected to become healthy:
+* Check container initialization logs: `docker compose logs -f backend`
+* Verify database connection readiness. The backend automatically retries database connection until MySQL completes initialization.
+
+### Port 80 Already in Use
+If port `80` is in use by another service on your host machine:
+* Modify the port mapping in `docker-compose.yml` under `frontend` services (e.g., `- "8080:80"`).
+
+### Resetting Database and Storage
+To reset persistent database storage and clean data state:
+```bash
+docker compose down -v
+docker compose up -d --build
+```
