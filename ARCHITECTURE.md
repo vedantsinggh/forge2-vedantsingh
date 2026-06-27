@@ -75,6 +75,6 @@ PulseDesk is a modern, enterprise-grade multi-tenant support desk application en
 ```
 
 - **Docker Compose Topology:**
-  - `backend`: PHP 8.2 FPM / Laravel API Service on Port 8000
-  - `frontend`: React 19 Production / Dev Build on Port 3000
-  - `db`: MySQL 8.0 Container with persistent volume mount
+  - `pulsedesk-frontend`: Nginx Reverse Proxy & React SPA static server on Port 80
+  - `pulsedesk-backend`: PHP 8.2-FPM Laravel API backend service (Internal Port 9000)
+  - `pulsedesk-db`: MySQL 8.0 Database container with persistent named volume (Internal Port 3306)

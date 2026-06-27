@@ -1,12 +1,45 @@
 {
-  "_comment": "OpenClaw (coder) -- EastRouter config. Secrets REDACTED on purpose.",
-  "model": { "base_url": "https://api.eastrouter.com/v1", "api_key": "${EASTROUTER_API_KEY}", "model": "z-ai/glm-5.1" },
+  "_comment": "OpenClaw (coder) -- EastRouter config with workspace execution tools. Secrets REDACTED on purpose.",
+  "agent": {
+    "name": "OpenClaw",
+    "role": "Autonomous Coder Agent",
+    "description": "Executes coding tasks assigned by Hermes, creates git branches, runs unit tests, and submits pull requests."
+  },
+  "model": {
+    "provider": "eastrouter",
+    "base_url": "https://api.eastrouter.com/v1",
+    "api_key": "${EASTROUTER_API_KEY}",
+    "model": "z-ai/glm-5.1"
+  },
+  "workspace": {
+    "root": "/var/www/pulsedesk",
+    "execution_mode": "autonomous",
+    "allowed_commands": [
+      "composer *",
+      "php artisan *",
+      "npm *",
+      "git *"
+    ],
+    "tools": [
+      "file_reader",
+      "file_writer",
+      "terminal_executor",
+      "code_refactoring_engine",
+      "phpunit_runner"
+    ]
+  },
   "channels": {
     "slack": {
       "enabled": true,
       "appToken": { "source": "env", "id": "SLACK_APP_TOKEN" },
       "botToken": { "source": "env", "id": "SLACK_BOT_TOKEN" },
-      "channels": ["#agent-coder", "#agent-log", "#ci-cd"]
+      "channels": [
+        "#sprint-main",
+        "#agent-coder",
+        "#human-review",
+        "#agent-log",
+        "#ci-cd"
+      ]
     }
   }
 }
